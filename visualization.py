@@ -5,19 +5,13 @@ from mpl_toolkits.mplot3d import Axes3D
 
 class visualization():
 
-	def __init__(self,filename):
+	def __init__(self,filename,num_divisions,visualize=False):
 		self.filename = filename
 		self.enableInteractivePlot()
-		self.ax = plt.figure().add_subplot(111, projection='3d') #create Axes3D object
+		if visualize == True:
+			self.ax = plt.figure().add_subplot(111, projection='3d') #create Axes3D object
 		self.data_file = open(self.filename,'r') #'/media/arya/54E4C473E4C458BE/Action_dataset/data1/0512164529.txt'
-		self.points = np.array([[-1, -1, -1],
-                  [1, -1, -1 ],
-                  [1, 1, -1],
-                  [-1, 1, -1],
-                  [-1, -1, 1],
-                  [1, -1, 1 ],
-                  [1, 1, 1],
-                  [-1, 1, 1]])
+		self.num_divisions = float(num_divisions)
 	
 
 	def enableInteractivePlot(self):
@@ -27,6 +21,7 @@ class visualization():
 	def getPointsAndNormalize(self,line):
 		self.getPoints(line)
 		self.normalize()
+		self.shiftOrigin()
 
 
 	def normalize(self):
@@ -55,17 +50,27 @@ class visualization():
 			self.p_x.append(line[i])
 			self.p_z.append(line[i+1])
 			self.p_y.append(line[i+2])
-			k=k+1	
+			k=k+1
 
 		self.p_x = np.array(self.p_x).reshape(len(self.p_x),1)
 		self.p_y = np.array(self.p_y).reshape(len(self.p_y),1)
 		self.p_z = np.array(self.p_z).reshape(len(self.p_z),1)
 
 
+	def shiftOrigin(self):
+		self.hip_center = []
+		self.hip_center.append((self.p_x[7]+self.p_x[9])/2)
+		self.hip_center.append((self.p_y[7]+self.p_y[9])/2)
+		self.hip_center.append((self.p_z[7]+self.p_z[9])/2)
+		self.p_x-=self.hip_center[0]
+		self.p_y-=self.hip_center[1]
+		self.p_z-=self.hip_center[2]
+
+
 	def setLimits(self):
-		self.ax.set_xlim(0,1)
-		self.ax.set_ylim(0,1)
-		self.ax.set_zlim(0,1)
+		self.ax.set_xlim(-1,1)
+		self.ax.set_ylim(-1,1)
+		self.ax.set_zlim(-1,1)
 
 
 	def setLabels(self):
@@ -75,7 +80,7 @@ class visualization():
 
 
 	def plot(self,j1,j2):
-		self.ax.plot([self.p_x[j1],self.p_x[j2]],[self.p_y[j1],self.p_y[j2]],[self.p_z[j1],self.p_z[j2]],'b')
+		self.ax.plot([self.p_x[j1],self.p_x[j2]],[self.p_y[j1],self.p_y[j2]],[self.p_z[j1],self.p_z[j2]],'#ff3300',linewidth=4)
 
 
 	def plotJoints(self):
@@ -96,6 +101,46 @@ class visualization():
 		self.plot(10,14)
 		self.plot(8,13)
 
+	def getCoordinates(self,x,y,z):
+		Z = []
+		count_x = np.array([1,0,-1,0],dtype='float')/self.num_divisions
+		count_y = np.array([0,1,0,-1],dtype='float')/self.num_divisions
+		x_coord = float(x)/self.num_divisions
+		y_coord = float(y)/self.num_divisions
+		for k in [z,z+1]:
+			for i in range(4):
+				next_coord = [-0.5+x_coord,-0.5+y_coord,-0.5+float(k)/self.num_divisions]
+				Z.append(next_coord)
+				x_coord+=count_x[i]
+				y_coord+=count_y[i]
+		return np.array(Z)		
+
+
+	def getSides(self,Z):
+		verts = [[Z[0],Z[1],Z[2],Z[3]],
+				 [Z[4],Z[5],Z[6],Z[7]], 
+				 [Z[0],Z[1],Z[5],Z[4]], 
+				 [Z[2],Z[3],Z[7],Z[6]], 
+				 [Z[1],Z[2],Z[6],Z[5]],
+				 [Z[4],Z[7],Z[3],Z[0]]]
+		return verts
+				 
+
+	def drawCubes(self):
+		for i in range(int(self.num_divisions)):
+			for j in range(int(self.num_divisions)):
+				for k in range(int(self.num_divisions)):
+					Z = self.getCoordinates(i,j,k)
+					verts = self.getSides(Z)
+					# plot sides
+					from mpl_toolkits.mplot3d.art3d import Poly3DCollection, Line3DCollection
+
+					collection = Poly3DCollection(verts, 
+					 facecolors=None, linewidths=1, edgecolors='g', alpha=.2)
+					face_color = [1, 1, 1] # alternative: matplotlib.colors.rgb2hex([0.5, 0.5, 1])
+					collection.set_facecolor(face_color)
+					collection.set_edgecolor('k')
+					self.ax.add_collection3d(collection)
 
 	def show(self):
 		for line in self.data_file:
@@ -104,16 +149,17 @@ class visualization():
 			self.setLimits()
 			self.setLabels()
 			self.getPointsAndNormalize(line)
+			self.drawCubes()
 			self.plotJoints()
 			self.ax.plot(self.p_x,self.p_y,self.p_z,'o')
 			r = [-1,1]
 			X, Y = np.meshgrid(r, r)
 			# plot vertices
-			self.ax.scatter3D(self.points[:, 0], self.points[:, 1], self.points[:, 2])
+			#self.ax.scatter3D(self.points[:, 0], self.points[:, 1], self.points[:, 2])
 			plt.draw()
 			plt.pause(0.02)
 			self.ax.cla()
 
 #sample object
-visual = visualization('/media/arya/54E4C473E4C458BE/Action_dataset/data1/0512164529.txt')
+visual = visualization('/media/arya/54E4C473E4C458BE/Action_dataset/data1/0512164529.txt',3,True)
 visual.show()
