@@ -161,5 +161,5 @@ class visualization():
 			self.ax.cla()
 
 #sample object
-visual = visualization('/media/arya/54E4C473E4C458BE/Action_dataset/data1/0512164529.txt',3,True)
-visual.show()
+# visual = visualization('/media/arya/54E4C473E4C458BE/Action_dataset/data1/0512164529.txt',3,True)
+# visual.show()
