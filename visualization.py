@@ -1,18 +1,30 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-
+import math
 
 class visualization():
 
 	def __init__(self,filename,num_divisions,visualize=False):
 		self.filename = filename
 		self.enableInteractivePlot()
+		self.joints_dict()
 		if visualize == True:
 			self.ax = plt.figure().add_subplot(111, projection='3d') #create Axes3D object
 		self.data_file = open(self.filename,'r') #'/media/arya/54E4C473E4C458BE/Action_dataset/data1/0512164529.txt'
 		self.num_divisions = float(num_divisions)
 	
+
+	def joints_dict(self):
+		self.dict = {1 : 'HEAD', 2 : 'NECK', 3 : 'TORSO', 4 : 'LEFT_SHOULDER', 5 : 'LEFT_ELBOW', 6 : 'RIGHT_SHOULDER', 7 : 'RIGHT_ELBOW', 8 : 'LEFT_HIP', 9 : 'LEFT_KNEE',
+				    10 : 'RIGHT_HIP', 11 : 'RIGHT_KNEE', 12 : 'LEFT_HAND', 13 : 'RIGHT_HAND', 14 : 'LEFT_FOOT', 15 : 'RIGHT_FOOT'}
+
+
+	def annotate(self):
+		for i, txt in enumerate(self.dict):
+			print txt
+			self.ax.text(self.p_x[i],self.p_y[i],self.p_z[i],self.dict[txt])
+
 
 	def enableInteractivePlot(self):
 		plt.ion()
@@ -142,6 +154,31 @@ class visualization():
 					collection.set_edgecolor('k')
 					self.ax.add_collection3d(collection)
 
+	def rotate_points(self):
+		#Only considering x-y coordinates
+		right_hip = [self.p_x[9],self.p_y[9]]
+		left_hip = [self.p_x[7],self.p_y[7]]
+		orientation = np.array([left_hip[0]-right_hip[0],left_hip[1]-right_hip[1]],dtype='float32')
+		theta = math.acos(orientation[0]/np.linalg.norm(orientation))
+
+		for i in range(len(self.p_x)):
+			self.p_x[i],self.p_y[i] = self.rotate((0,0),(self.p_x[i],self.p_y[i]),-theta)
+
+
+	def rotate(self,origin, point, angle):
+	    """
+	    Rotate a point counterclockwise by a given angle around a given origin.
+
+	    The angle should be given in radians.
+	    """
+	    ox, oy = origin
+	    px, py = point
+
+	    qx = ox + math.cos(angle) * (px - ox) - math.sin(angle) * (py - oy)
+	    qy = oy + math.sin(angle) * (px - ox) + math.cos(angle) * (py - oy)
+	    return qx, qy
+
+
 	def show(self):
 		for line in self.data_file:
 			if line=="END":
@@ -149,8 +186,10 @@ class visualization():
 			self.setLimits()
 			self.setLabels()
 			self.getPointsAndNormalize(line)
+			# self.rotate_points()
 			self.drawCubes()
 			self.plotJoints()
+			self.annotate()
 			self.ax.plot(self.p_x,self.p_y,self.p_z,'o')
 			r = [-1,1]
 			X, Y = np.meshgrid(r, r)
@@ -161,5 +200,5 @@ class visualization():
 			self.ax.cla()
 
 #sample object
-# visual = visualization('/media/arya/54E4C473E4C458BE/Action_dataset/data1/0512164529.txt',3,True)
+# visual = visualization('/media/arya/54E4C473E4C458BE/Action_dataset/data1/0512171649.txt',3,False)
 # visual.show()
