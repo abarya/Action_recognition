@@ -3,11 +3,25 @@ import visualization
 import hist
 import fourier_ag
 
+
+#--------------------------------------- FUNCTION SPACE --------------------------------------------------#
+
+def normalize(histogram):
+	for i in range(len(histogram)):
+		mean = np.mean(histogram[i]);
+		var  = np.var(histogram[i]);
+		histogram[i] = (histogram[i]-mean)/var;
+	return histogram
+
+#---------------------------------------------------------------------------------------------------------#
+
+
 FOURIER_COEFF_LENGTH = 60
 
 v = visualization.visualization('/media/arya/54E4C473E4C458BE/Action_dataset/data1/0512164800.txt',3)
 
 histogram = hist.createHistogram(v)
+histogram = normalize(histogram);
 
 feature_vector = np.zeros((len(histogram)*FOURIER_COEFF_LENGTH),dtype='float')
 
@@ -18,6 +32,6 @@ for i in range(len(histogram)):
 	e = FOURIER_COEFF_LENGTH*(i+1)
 	feature_vector[s:e] = fourier_pyramid.feature_out
 
-print feature_vector.shape	
+print feature_vector.shape
 
 
