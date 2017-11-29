@@ -19,7 +19,7 @@ def createHistogram(v):
 
 	for line in v.data_file:
 		if line=="END":
-			break
+			break	
 		v.getPointsAndNormalize(line);
 		hist = createHistogramPerFrame(int(v.num_divisions),np.concatenate((v.p_x.reshape(len(v.p_x),1),v.p_y.reshape(len(v.p_x),1),v.p_z.reshape(len(v.p_x),1)),axis=1));
 		final_hist = np.concatenate((final_hist,hist.reshape(hist.size,1)),axis=1) # Now, each row will become a time series by the end!!!
@@ -29,6 +29,6 @@ def createHistogram(v):
 
 
 #sample run
-# import visualization
-# v = visualization.visualization('/media/arya/54E4C473E4C458BE/Action_dataset/data1/0512164800.txt',3)
-# final_hist = createHistogram(v)
+import visualization
+v = visualization.visualization('/media/arya/54E4C473E4C458BE/Action_dataset/data1/0512174930.txt',3)
+final_hist = createHistogram(v)

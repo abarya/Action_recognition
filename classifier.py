@@ -23,8 +23,8 @@ class Classifier():
 		return self.clf.predict(X)
 			
 
-cl = Classifier.create_classifier(name="SVM")
-X=np.array([[2,3],[4,5]])
-y = np.array([[0],[1]])
-cl.fit(X,y)
-print cl.predict(np.array([10,2]))	
+# cl = Classifier.create_classifier(name="SVM")
+# X=np.array([[2,3],[4,5]])
+# y = np.array([[0],[1]])
+# cl.fit(X,y)
+# print cl.predict(np.array([10,2]))	
