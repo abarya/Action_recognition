@@ -6,6 +6,7 @@ import visualization
 import hist
 import fourier_ag
 import classifier
+from sklearn.decomposition import PCA
 
 FOURIER_COEFF_LENGTH = 60
 activityToClassNumDict = {'rinsing mouth with water': 7, 'writing on whiteboard': 1, 'opening pill container': 2,
@@ -13,6 +14,7 @@ activityToClassNumDict = {'rinsing mouth with water': 7, 'writing on whiteboard'
 						'relaxing on couch': 10, 'brushing teeth': 8, 'still': 11, 'talking on the phone': 0, 'cooking (stirring)': 6,
 						'wearing contact lenses': 4}
 directory = "/media/arya/54E4C473E4C458BE/Action_dataset/data"
+
 
 def normalize(histogram):
 	for i in range(len(histogram)):
@@ -45,7 +47,17 @@ def getLabelDict(file_name):
 	return activityLabel	
 
 
+def createDescriptorAndSave(v,X,Y,activity_num,trans):
+	histogram = hist.createHistogram(v,trans)
+	feature_vec = getFeatureVector(histogram)
+	#save feature vector and label to file
+	np.savetxt(X,feature_vec.reshape((1,feature_vec.size)),delimiter=',') 
+	np.savetxt(Y,activity_num)
+
+
 def extractFeatures(directory):
+	X = open("train/train_x.data","w")
+	Y = open("train/train_y.data","w")
 	for x in range(1,5):
 		path = directory + str(x)
 		label_file_path = path + '/activityLabel.txt'
@@ -55,23 +67,32 @@ def extractFeatures(directory):
 			if file.endswith(".txt"):
 				files.append(file)
 
-		X = open("train/train_x.data","a")
-		Y = open("train/train_y.data","a")
-
 		i=0
 		for file_name in files:
 			print i, file_name
 			i=i+1
 			if file_name!='activityLabel.txt':
 				file_path = path + '/' + file_name
-				v = visualization.visualization(file_path,3)
-				histogram = hist.createHistogram(v)
-				feature_vec = getFeatureVector(histogram)
-				np.savetxt(X,feature_vec.reshape((1,feature_vec.size)),delimiter=',') 
-				np.savetxt(Y,np.array([activityToClassNumDict[activityLabelDict[file_name]]]))
+				v = visualization.visualization(file_path,10)
+				trans=False
+				activity_num = np.array([activityToClassNumDict[activityLabelDict[file_name]]])
+				createDescriptorAndSave(v,X,Y,activity_num,trans)
+				# apply translation to points about y-axis
+				trans=True
+				createDescriptorAndSave(v,X,Y,activity_num,trans)
 
 
-#extractFeatures(directory)
+def computeAccuracy(x,y,model):
+	counter=0
+	for i in range(len(y)) :
+		prediction=model.predict(x[i].reshape(1,-1))
+		if(prediction==y[i]) :
+			counter+=1
+	accuracy=float(counter*100)/len(y)
+	return accuracy
+
+
+# extractFeatures(directory)
 filename_x = "train/train_x.data"
 filename_y = "train/train_y.data"
 data_x = []
@@ -91,33 +112,41 @@ with open(filename_y, 'rb') as csvfile:
 	for i in range(len(label)):
 		label[i] = int(float(label[i][0]))
 
+
+data_x = np.array(data_x)
+# print data_x.shape
+# #reduce dimensionality
+# pca = PCA(n_components=500)
+# pca.fit(data_x)
+# data_x = pca.transform(data_x)
+# print data_x.shape
+
+
 trainingSet=[]
 training_label=[]
 testSet=[]
 test_label=[]
 for i in range(len(data_x))	 :
-	if random.random() < 0.8:
+	if random.random() < 0.7:
         	trainingSet.append(data_x[i])
         	training_label.append(label[i])
 	else :
 		testSet.append(data_x[i])
 		test_label.append(label[i])
 
-training_label= np.array(training_label)
+training_label = np.array(training_label)
+print training_label.shape,len(trainingSet)
+
 trainingSet=np.array(trainingSet)
 
 model = classifier.Classifier.create_classifier(name="SVM")
 model.fit(trainingSet,training_label)
 
-counter=0
-for i in range(len(training_label)) :
-	prediction=model.predict(trainingSet[i])
-	if(prediction==training_label[i]) :
-		counter+=1
+#train accuracy
+print('training accuracy is %d%% with training samples = %d'%(computeAccuracy(trainingSet,training_label,model),len(training_label)))
+#test accuracy
+print('test accuracy is %d%% with test samples = %d'%(computeAccuracy(testSet,test_label,model),len(test_label)))
 
-accuracy=float(counter)/len(training_label)
-print "counter", counter, len(training_label)
-print "accuracy", accuracy
 
 print np.array(data_x).shape,np.array(label).shape
 

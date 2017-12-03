@@ -3,16 +3,21 @@ import numpy as np
 class Classifier():
 
 	def __init__(self,**dict):
-		from sklearn import svm
-		self.clf = svm.SVC()
-
+		if dict['name']=="SVM":
+			from sklearn import svm
+			self.clf = svm.SVC(kernel='rbf')
+		else:
+			from sklearn import linear_model
+			self.clf = linear_model.LogisticRegression(penalty='l2', dual=False, tol=0.0001, C=1.0, fit_intercept=True,
+													intercept_scaling=1, class_weight=None, random_state=None, solver='liblinear',
+													max_iter=100, multi_class='ovr', verbose=0, warm_start=False, n_jobs=1)
+				
 
 	@classmethod
 	def create_classifier(cls,**dict):
 		if(dict['name']!='SVM'):
-			print 'name %s not defined as a valid classifier'%(dict['name'])
-			return None
-		return cls()
+			return cls(name=dict['name'])
+		return cls(name="")
 
 	
 	def fit(self,X,y):

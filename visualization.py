@@ -15,6 +15,10 @@ class visualization():
 		self.num_divisions = float(num_divisions)
 	
 
+	def restoreDataFile(self):
+		self.data_file = open(self.filename,'r')
+
+
 	def joints_dict(self):
 		self.dict = {1 : 'HEAD', 2 : 'NECK', 3 : 'TORSO', 4 : 'LEFT_SHOULDER', 5 : 'LEFT_ELBOW', 6 : 'RIGHT_SHOULDER', 7 : 'RIGHT_ELBOW', 8 : 'LEFT_HIP', 9 : 'LEFT_KNEE',
 				    10 : 'RIGHT_HIP', 11 : 'RIGHT_KNEE', 12 : 'LEFT_HAND', 13 : 'RIGHT_HAND', 14 : 'LEFT_FOOT', 15 : 'RIGHT_FOOT'}
@@ -34,6 +38,7 @@ class visualization():
 		self.getPoints(line)
 		self.normalize()
 		self.shiftOrigin()
+		# self.rotate_points()
 
 
 	def normalize(self):
@@ -77,6 +82,10 @@ class visualization():
 		self.p_x-=self.hip_center[0]
 		self.p_y-=self.hip_center[1]
 		self.p_z-=self.hip_center[2]
+
+
+	def translate(self):
+		self.p_x*=(-1)
 
 
 	def setLimits(self):
@@ -186,10 +195,10 @@ class visualization():
 			self.setLimits()
 			self.setLabels()
 			self.getPointsAndNormalize(line)
-			# self.rotate_points()
-			self.drawCubes()
+			self.rotate_points()
+			# self.drawCubes()
 			self.plotJoints()
-			self.annotate()
+			#self.annotate()
 			self.ax.plot(self.p_x,self.p_y,self.p_z,'o')
 			r = [-1,1]
 			X, Y = np.meshgrid(r, r)
@@ -198,7 +207,8 @@ class visualization():
 			plt.draw()
 			plt.pause(0.02)
 			self.ax.cla()
+		# self.restoreDataFile()	
 
 #sample object
-# visual = visualization('/media/arya/54E4C473E4C458BE/Action_dataset/data1/0512171649.txt',3,False)
+# visual = visualization('/media/arya/54E4C473E4C458BE/Action_dataset/data1/0512164529.txt',5,True)
 # visual.show()
