@@ -8,32 +8,33 @@ import fourier_ag
 import classifier
 from sklearn.decomposition import PCA
 
-FOURIER_COEFF_LENGTH = 60
+
 activityToClassNumDict = {'rinsing mouth with water': 7, 'writing on whiteboard': 1, 'opening pill container': 2,
 						'random': 12, 'talking on couch': 5, 'drinking water': 3, 'cooking (chopping)': 13, 'working on computer': 9,
 						'relaxing on couch': 10, 'brushing teeth': 8, 'still': 11, 'talking on the phone': 0, 'cooking (stirring)': 6,
 						'wearing contact lenses': 4}
-directory = "/media/arya/54E4C473E4C458BE/Action_dataset/data"
+
+directory = "/home/agniv/Documents/Action_dataset/data";
 
 
 def normalize(histogram):
 	for i in range(len(histogram)):
 		mean = np.mean(histogram[i]);
 		var  = np.var(histogram[i]);
-		histogram[i] = (histogram[i]-mean)/var;
+		if(var!=0):
+			histogram[i] = (histogram[i]-mean)/var;
+		else:
+			histogram[i]= histogram[i] - mean;
 	return histogram
 
 
 def getFeatureVector(histogram):
-	feature_vector = np.zeros((len(histogram)*FOURIER_COEFF_LENGTH),dtype='float')
-	#histogram = normalize(histogram)
+	fout = np.zeros(20);
 	for i in range(len(histogram)):
-		fourier_pyramid = fourier_ag.fourier(histogram[i],2,20)
-		fourier_pyramid.createFeature()
-		s = FOURIER_COEFF_LENGTH*i
-		e = FOURIER_COEFF_LENGTH*(i+1)
-		feature_vector[s:e] = fourier_pyramid.feature_out
-	return feature_vector
+		fourier_pyramid = fourier_ag.fourier(histogram[i],2,10)
+		fout += fourier_pyramid.createFeature()
+	
+	return fout
 
 
 def getLabelDict(file_name):
@@ -48,7 +49,8 @@ def getLabelDict(file_name):
 
 
 def createDescriptorAndSave(v,X,Y,activity_num,trans):
-	histogram = hist.createHistogram(v,trans)
+	histogram = hist.createHistogram(v,trans);
+	#histogram = normalize(histogram);
 	feature_vec = getFeatureVector(histogram)
 	#save feature vector and label to file
 	np.savetxt(X,feature_vec.reshape((1,feature_vec.size)),delimiter=',') 
@@ -59,8 +61,8 @@ def extractFeatures(directory):
 	X = open("train/train_x.data","w")
 	Y = open("train/train_y.data","w")
 	for x in range(1,5):
-		path = directory + str(x)
-		label_file_path = path + '/activityLabel.txt'
+		path = directory + str(x);
+		label_file_path = path + '/activityLabel.txt';
 		activityLabelDict = getLabelDict(label_file_path)
 		files = []
 		for file in os.listdir(path):
@@ -92,7 +94,10 @@ def computeAccuracy(x,y,model):
 	return accuracy
 
 
-# extractFeatures(directory)
+#extractFeatures(directory)
+
+
+
 filename_x = "train/train_x.data"
 filename_y = "train/train_y.data"
 data_x = []
@@ -138,6 +143,11 @@ training_label = np.array(training_label)
 print training_label.shape,len(trainingSet)
 
 trainingSet=np.array(trainingSet)
+'''pca = PCA(n_components=20)
+pca.fit(trainingSet);
+trainingSet = pca.transform(trainingSet);
+testSet = np.array(testSet);
+testSet = pca.transform(testSet);'''
 
 model = classifier.Classifier.create_classifier(name="SVM")
 model.fit(trainingSet,training_label)
