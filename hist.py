@@ -1,29 +1,34 @@
 import numpy as np
 
-Range = 1.0 # -0.5 to +0.5
+Range = 2.0 # -1 to +1
 
 def createHistogramPerFrame(num_divisions,points):
 	hist = np.zeros((num_divisions,1,num_divisions))
+	minimum_coord = np.amin(points, axis=0)
 	for i in range(len(points)):
-		idx = min(int(((points[i][0]+0.5)/Range)*num_divisions),num_divisions-1)
-		idy = 0#min(int(((points[i][1]+0.5)/Range)*num_divisions),num_divisions-1)
-		idz = min(int(((points[i][2]+0.5)/Range)*num_divisions),num_divisions-1)
+		points[i]-=minimum_coord
+		idx = min(int(((points[i][0])/Range)*num_divisions),num_divisions-1)
+		idy = 0#min(int(((points[i][1])/Range)*num_divisions),num_divisions-1)
+		idz = min(int(((points[i][2])/Range)*num_divisions),num_divisions-1)
+		if idx<0 or idz<0:
+			print "hello    jasdksdjk",idx,idz
 		hist[idx][idy][idz]+=1
-	return hist;
+	return hist
 
 
 def createHistogram(v,trans):
-	hist_size = v.num_divisions * 1 * v.num_divisions;
+	hist_size = v.num_divisions * 1 * v.num_divisions
 	#TODO: Is the first column of zeros required?
-	final_hist = np.zeros((int(hist_size),1),np.float32);
+	final_hist = np.zeros((int(hist_size),1),np.float32)
 
 	for line in v.data_file:
 		if line=="END":
 			break	
-		v.getPointsAndNormalize(line);
+		v.getPointsAndNormalize(line)
+		v.getSkeletonPoints()
 		if trans==True:
 			v.translate()
-		hist = createHistogramPerFrame(int(v.num_divisions),np.concatenate((v.p_x.reshape(len(v.p_x),1),v.p_y.reshape(len(v.p_x),1),v.p_z.reshape(len(v.p_x),1)),axis=1));
+		hist = createHistogramPerFrame(int(v.num_divisions),np.array(v.connecter_points))
 		final_hist = np.concatenate((final_hist,hist.reshape(hist.size,1)),axis=1) # Now, each row will become a time series by the end!!!
 	v.restoreDataFile()
 	# shape of final_hist will be (hist.size*total_frames)

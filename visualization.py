@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import math
-
+ 
 class visualization():
 
 	def __init__(self,filename,num_divisions,visualize=False):
@@ -13,6 +13,10 @@ class visualization():
 			self.ax = plt.figure().add_subplot(111, projection='3d') #create Axes3D object
 		self.data_file = open(self.filename,'r') #'/media/arya/54E4C473E4C458BE/Action_dataset/data1/0512164529.txt'
 		self.num_divisions = float(num_divisions)
+		#It actually contains the tuple of joints which is used to get skeleton of the person.
+		self.list_skeleton=[(0,1),(1,2),(2,3),(3,4),(5,6),(1,2),(2,5),(3,5),(3,4),(4,11),(6,12),(7,8),
+		                    (7,9),(9,10),(2,7),(2,9),(10,14),(8,13)]
+
 	
 
 	def restoreDataFile(self):
@@ -107,21 +111,40 @@ class visualization():
 	def plotJoints(self):
 		for i in range(4):
 			self.plot(i,i+1)
-		self.plot(5,6)	
-		self.plot(1,2)
-		self.plot(2,5)
-		self.plot(3,5)
-		self.plot(3,4)
-		self.plot(4,11)
-		self.plot(6,12)
-		self.plot(7,8)
-		self.plot(7,9)
-		self.plot(9,10)
-		self.plot(2,7)
-		self.plot(2,9)
-		self.plot(10,14)
-		self.plot(8,13)
+		for pair in self.list_skeleton:
+			self.plot(pair[0],pair[1])
 
+
+	def getNormalizedVec(self,point1,point2):
+		'''The function returns the unit vector passing through point1 and point2.
+		   It also returns the distance b/w p1 and p2.
+		   point1 and point2 are numpy arrays'''
+		vector = point1-point2
+		return vector/np.linalg.norm(vector),np.linalg.norm(vector)
+
+
+	def getPointsOnLine(self,point1,point2,dist=.001):
+		unit_vector,distance12 = self.getNormalizedVec(point1,point2)
+		distance = 0 #distance of a point from point1 along unit_vector direction
+		curr_point = point1
+		#basically, we are moving distance=dist in each iteration along the direction
+		#of the unit_vector 
+		inc = unit_vector*dist #values to be incremented in each direction
+		while(distance<=distance12):
+			self.connecter_points.append(curr_point)
+			curr_point+=inc
+			distance+=dist
+
+
+	def getSkeletonPoints(self):
+		# this list contain the connecter coordinates b/w two joints for all the joints 
+		self.connecter_points = []
+		for pair in self.list_skeleton:
+			point1 = np.array([self.p_x[pair[0]],self.p_y[pair[0]],self.p_z[pair[0]]])
+			point2 = np.array([self.p_x[pair[1]],self.p_y[pair[1]],self.p_z[pair[1]]])
+			self.getPointsOnLine(point1,point2)
+		
+		
 	def getCoordinates(self,x,y,z):
 		Z = []
 		count_x = np.array([1,0,-1,0],dtype='float')/self.num_divisions
