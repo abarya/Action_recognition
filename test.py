@@ -26,8 +26,6 @@
 # 	hist = createHistogram(int(v.num_divisions),np.concatenate((v.p_x.reshape(len(v.p_x),1),v.p_y.reshape(len(v.p_x),1),v.p_z.reshape(len(v.p_x),1)),axis=1));
 # 	final_hist = np.concatenate((final_hist,np.reshape(hist.size,1))) # Now, each row will become a time series by the end!!!
 # 	print final_hist.shape
-
-def fun(**dict1):
-	print dict1['name']
-
-fun(name="aqya")	
+import numpy as np
+str='/media/arya/54E4C473E4C458BE/Action_dataset/data1/0512164529.txt'
+print str.split('/')[-2]

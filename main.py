@@ -2,6 +2,7 @@ import numpy as np
 import os
 import csv
 import random
+import sys
 
 import visualization
 import hist
@@ -17,7 +18,8 @@ activityToClassNumDict = {'rinsing mouth with water': 7, 'writing on whiteboard'
 
 directory = "/media/arya/54E4C473E4C458BE/Action_dataset/data";
 
-
+# print sys.argv[1]
+# num = int(sys.argv[1]) #number of the person for which the feature is extracted
 def normalize(histogram):
 	for i in range(len(histogram)):
 		mean = np.mean(histogram[i]);
@@ -49,18 +51,21 @@ def getLabelDict(file_name):
 
 
 def createDescriptorAndSave(v,X,Y,activity_num,trans):
-	histogram = hist.createHistogram(v,trans);
+	histogram,hist_descriptor = hist.createHistogram(v,trans);
 	#histogram = normalize(histogram);
-	feature_vec = getFeatureVector(histogram)
+	# feature_vec = getFeatureVector(histogram)
 	#save feature vector and label to file
-	np.savetxt(X,feature_vec.reshape((1,feature_vec.size)),delimiter=',') 
+	# np.savetxt(X,feature_vec.reshape((1,feature_vec.size)),delimiter=',') 
+	# np.savetxt(Y,activity_num)
+	#save hist_descriptor feature vector and label to file
+	np.savetxt(X,hist_descriptor.reshape((1,hist_descriptor.size)),delimiter=',') 
 	np.savetxt(Y,activity_num)
 
 
 def extractFeatures(directory):
-	X = open("train/train_x.data","w")
-	Y = open("train/train_y.data","w")
-	for x in range(1,5):
+	for x in range(num,num+1):
+		X = open("train/train_x"+str(num)+".data","w")
+		Y = open("train/train_y"+str(num)+".data","w")
 		path = directory + str(x);
 		label_file_path = path + '/activityLabel.txt';
 		activityLabelDict = getLabelDict(label_file_path)
@@ -74,13 +79,13 @@ def extractFeatures(directory):
 			i=i+1
 			if file_name!='activityLabel.txt':
 				file_path = path + '/' + file_name
-				v = visualization.visualization(file_path,20)
+				v = visualization.visualization(file_path,5)
 				trans=False
 				activity_num = np.array([activityToClassNumDict[activityLabelDict[file_name]]])
 				createDescriptorAndSave(v,X,Y,activity_num,trans)
-				# apply translation to points about y-axis
-				trans=True
-				createDescriptorAndSave(v,X,Y,activity_num,trans)
+				# # apply translation to points about y-axis
+				# trans=True
+				# createDescriptorAndSave(v,X,Y,activity_num,trans)
                     
 
 def computeAccuracy(x,y,model):
@@ -93,30 +98,33 @@ def computeAccuracy(x,y,model):
 	return accuracy
 
 
-extractFeatures(directory)
+# extractFeatures(directory)
 
 train_accuracy = 0
 test_accuracy = 0
 maximum = 0
 for x in range(10):
-	filename_x = "train/train_x.data"
-	filename_y = "train/train_y.data"
 	data_x = []
 	label = []
-
-	text_file = open(filename_x, "r")
-
-	with open(filename_x, 'rb') as csvfile:
-		lines = csv.reader(csvfile)
-		data_x = list(lines)
-		for i in range(len(data_x)):
-			data_x[i] = [float(x) for x in data_x[i]]
-
-	with open(filename_y, 'rb') as csvfile:
-		lines = csv.reader(csvfile)
-		label = list(lines)
-		for i in range(len(label)):
-			label[i] = int(float(label[i][0]))
+	for count in range(1,5):
+		filename_x = "train/train_x"
+		filename_y = "train/train_y"
+		filename_x = filename_x+str(count)+".data"
+		with open(filename_x, "rb") as csvfile:
+			lines = csv.reader(csvfile)
+			lines = list(lines)
+			data_x += lines
+			for i in range(len(lines)*(count-1),len(data_x)):
+				data_x[i] = [float(x) for x in data_x[i]]
+		filename_y = filename_y+str(count)+".data"
+		with open(filename_y, "rb") as csvfile:
+			lines = csv.reader(csvfile)
+			lines = list(lines)
+			print lines,filename_y
+			label += lines
+			for i in range(len(lines)*(count-1),len(label)):
+				print label[i],count,i
+				label[i] = int(float(label[i][0]))
 
 
 	data_x = np.array(data_x)
